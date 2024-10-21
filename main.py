@@ -152,7 +152,7 @@ def show_post(post_id):
                 text=form.comments.data,
                 comment_author=current_user,
                 parent_post=requested_post,
-                time=datetime.now().strftime("%B %d, %Y at %H:%M:%S")
+                time=datetime.now().strftime("%B %d, %Y %H:%M:%S")
             )
             db.session.add(new_comment)
             db.session.commit()
@@ -225,4 +225,5 @@ def delete_post(post_id):
 
 if __name__ == "__main__":
     with app.app_context():
+        db.create_all()
         app.run()
