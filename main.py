@@ -206,7 +206,11 @@ def edit_post(post_id):
         post.title = edit_form.title.data
         post.subtitle = edit_form.subtitle.data
         post.img_url = edit_form.img_url.data
-        post.author = edit_form.author.data
+        author = User.query.filter_by(name=edit_form.author.data).first()
+        if author:
+            post.author = author
+        else:
+            flash("Author not found!", category="error")
         post.body = edit_form.body.data
         db.session.commit()
         return redirect(url_for("show_post", post_id=post.id))
@@ -225,5 +229,4 @@ def delete_post(post_id):
 
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()
-        app.run()
+        app.run(debug=True)
