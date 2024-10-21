@@ -229,7 +229,7 @@ def delete_post(post_id):
     return redirect(url_for('get_all_posts'))
 
 
-@app.route("/delete-comment/<int:comment_id>", methods=["POST"])
+@app.route("/delete-comment/<int:comment_id>", methods=["GET", "POST"])
 @login_required
 @admin_only
 def delete_comment(comment_id):
@@ -242,4 +242,4 @@ def delete_comment(comment_id):
 
 if __name__ == "__main__":
     with app.app_context():
-        app.run(debug=True)
+        app.run()
