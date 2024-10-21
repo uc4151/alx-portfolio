@@ -206,7 +206,8 @@ def edit_post(post_id):
         post.title = edit_form.title.data
         post.subtitle = edit_form.subtitle.data
         post.img_url = edit_form.img_url.data
-        author = User.query.filter_by(name=edit_form.author.data).first()
+        print(current_user.name)
+        author = User.query.filter_by(name=current_user.name).first()
         if author:
             post.author = author
         else:
