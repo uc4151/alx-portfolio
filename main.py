@@ -6,14 +6,16 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
-from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
+from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm, EmailForm
 from functools import wraps
 from flask import abort
 import hashlib
 from dotenv import load_dotenv
+from email_sender import EmailSender
 import os
 
 load_dotenv()
+email_sender = EmailSender()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRETKEY')
@@ -94,7 +96,12 @@ def register():
     if request.method == "POST":
         if User.query.filter_by(email=form.email.data).first():
             return redirect(url_for('login', flash=flash("Email already exist, login instead")))
-        p_word = generate_password_hash(form.password.data, "pbkdf2:sha256", 8)
+        print(form.password.data)
+        if form.password.data == form.password_confirmation.data:
+            p_word = generate_password_hash(form.password.data, "pbkdf2:sha256", 8)
+        else:
+            flash("Passwords don't match, please try again.")
+            return redirect(url_for("register"))
         new_user = User(
             name=form.name.data,
             email=form.email.data,
@@ -166,13 +173,22 @@ def about():
     return render_template("about.html", current_user=current_user)
 
 
-@app.route("/contact")
+@app.route("/contact", methods=["GET", "POST"])
 def contact():
-    return render_template("contact.html", current_user=current_user)
+    form = EmailForm()
+    if form.validate_on_submit() and current_user.is_authenticated:
+        email_sender.send_email(
+            sender_email=form.email.data,
+            sender_name=current_user.name,
+            subject=f"Message from {current_user.name}",
+            body=form.message.data
+        )
+        flash("Your message has been sent!")
+        return redirect(url_for("contact"))
+    return render_template("contact.html", form=form, current_user=current_user)
 
 
 @app.route("/new-post", methods=['GET', 'POST'])
-@admin_only
 def add_new_post():
     form = CreatePostForm()
     if form.validate_on_submit():
@@ -236,10 +252,9 @@ def delete_comment(comment_id):
     comment_to_delete = Comment.query.get(comment_id)
     db.session.delete(comment_to_delete)
     db.session.commit()
-    flash("Comment deleted successfully.", "Success")
     return redirect(url_for('show_post', post_id=comment_to_delete.post_id))
 
 
 if __name__ == "__main__":
     with app.app_context():
-        app.run()
+        app.run(debug=True)
