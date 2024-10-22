@@ -25,7 +25,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 # CONNECT TO DB
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blogpost.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -109,7 +109,7 @@ def register():
         )
         db.session.add(new_user)
         db.session.commit()
-        return redirect(url_for("get_all_posts"))
+        return redirect(url_for("login"))
     return render_template("register.html", form=form, current_user=current_user)
 
 
