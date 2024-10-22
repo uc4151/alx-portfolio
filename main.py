@@ -185,6 +185,9 @@ def contact():
         )
         flash("Your message has been sent!")
         return redirect(url_for("contact"))
+    elif not current_user.is_authenticated:
+        flash("You need to login to send email!")
+        return redirect(url_for("login"))
     return render_template("contact.html", form=form, current_user=current_user)
 
 
