@@ -2,16 +2,16 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
   <!-- Page Header -->
-  <header class="masthead" style="background-image: url('{{ url_for('static', filename='img/home_page.jpg')}}')">
+  <header class="masthead" style="background-image: url('{{ url_for('static', filename='img/bg3.jpeg')}}')">
     <div class="overlay"></div>
     <div class="container">
       <div class="row">
         <div class="col-lg-8 col-md-10 mx-auto">
           <div class="site-heading">
             {% if current_user.is_authenticated: %}
-            <h1>{{ current_user.name }}, Welcome to Shola's Blog</h1>
+            <h1>{{ current_user.name }}, Welcome to Intel-Vibez Blog</h1>
             {% else %}
-            <h1>Welcome to Shola's Blog</h1>
+            <h1>Welcome to Intel-Vibez Blog</h1>
             {% endif %}
             <span class="subheading">A collection of random musings.</span>
           </div>
