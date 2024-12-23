@@ -483,3 +483,39 @@ footer .copyright {
   font-size: 16px;
   padding: 25px 35px;
 }
+
+/* Centered Login Page Styling */
+.login-box {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.login-box h1 {
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #343a40;
+}
+
+.login-box .btn-primary {
+  background-color: #0085A1;
+  border-color: #0085A1;
+}
+
+.login-box .btn-primary:hover {
+  background-color: #006f8b;
+  border-color: #006f8b;
+}
+
+.alert {
+  margin-bottom: 20px;
+  font-size: 14px;
+  text-align: center;
+}
+
+body {
+  background-color: #f8f9fa;
+}

@@ -27,6 +27,11 @@
       <div class="col-lg-8 col-md-10 mx-auto">
         {{ ckeditor.load() }}
         {{ ckeditor.config(name='body') }}
+        <script src="{{ url_for('static', filename='ckeditor/ckeditor.js') }}"></script>
+        <textarea name="content" id="editor" required></textarea>
+        <script>
+          CKEDITOR.replace('editor');
+        </script>
         {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}) }}
       </div>
     </div>

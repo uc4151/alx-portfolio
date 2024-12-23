@@ -38,6 +38,11 @@
 <!--           Comments Area -->
           {{ ckeditor.load() }}
           {{ ckeditor.config(name='comment') }}
+          <script src="{{ url_for('static', filename='ckeditor/ckeditor.js') }}"></script>
+          <textarea name="content" id="editor" required></textarea>
+          <script>
+            CKEDITOR.replace('editor');
+          </script>
           {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}) }}
           <div class="col-lg-8 col-md-10 mx-auto comment">
             {% for comment in post.comments: %}
