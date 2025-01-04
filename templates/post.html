@@ -36,8 +36,6 @@
 
 
 <!--           Comments Area -->
-          {{ ckeditor.load() }}
-          {{ ckeditor.config(name='comment') }}
           <script src="{{ url_for('static', filename='ckeditor/ckeditor.js') }}"></script>
           <textarea name="content" id="editor" required></textarea>
           <script>

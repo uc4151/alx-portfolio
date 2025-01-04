@@ -3,39 +3,48 @@
 
 {% block content %}
 {% include "header.html" %}
-  <!-- Page Header -->
-  <header class="masthead" style="background-image: url('{{ url_for('static', filename='img/edit-bg.jpg')}}')">
-    <div class="overlay"></div>
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-8 col-md-10 mx-auto">
-          <div class="page-heading">
-            {% if is_edit: %}
-            <h1>Edit Post</h1>
-            {% else: %}
-            <h1>New Post</h1>
-            {% endif %}
-            <span class="subheading">You're going to make a great blog post!</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </header>
-
+<!-- Page Header -->
+<header class="masthead" style="background-image: url('{{ url_for('static', filename='img/edit-bg.jpg')}}')">
+  <div class="overlay"></div>
   <div class="container">
     <div class="row">
       <div class="col-lg-8 col-md-10 mx-auto">
-        {{ ckeditor.load() }}
-        {{ ckeditor.config(name='body') }}
-        <script src="{{ url_for('static', filename='ckeditor/ckeditor.js') }}"></script>
-        <textarea name="content" id="editor" required></textarea>
-        <script>
-          CKEDITOR.replace('editor');
-        </script>
-        {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}) }}
+        <div class="page-heading">
+          {% if is_edit: %}
+          <h1>Edit Post</h1>
+          {% else: %}
+          <h1>New Post</h1>
+          {% endif %}
+          <span class="subheading">You're going to make a great blog post!</span>
+        </div>
       </div>
     </div>
   </div>
+</header>
+
+<div class="container">
+  <div class="row">
+    <div class="col-lg-8 col-md-10 mx-auto">
+      <form method="POST">
+        {{ form.csrf_token }}
+        <div class="form-group">
+          {{ form.title.label }}
+          {{ form.title(class_="form-control") }}
+        </div>
+        <div class="form-group">
+          {{ form.body.label }}
+          {{ form.body(id="editor", class_="form-control") }}
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='ckeditor/ckeditor.js') }}"></script>
+<script>
+  CKEDITOR.replace('editor');
+</script>
 
 {% include "footer.html" %}
 {% endblock %}

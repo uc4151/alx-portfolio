@@ -1,12 +1,14 @@
 from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_bootstrap import Bootstrap
-from flask_ckeditor import CKEditor
+from flask_wtf import FlaskForm
+from wtforms import StringField, TextAreaField, SubmitField
+from wtforms.validators import DataRequired
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
-from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm, EmailForm
+from forms import CreatePostForm, RegisterForm, LoginForm, PostForm, CommentForm, EmailForm
 from functools import wraps
 from flask import abort
 import hashlib
@@ -19,7 +21,6 @@ email_sender = EmailSender()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRETKEY')
-ckeditor = CKEditor(app)
 Bootstrap(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -55,6 +56,10 @@ class BlogPost(db.Model):
     #***************Parent Relationship*************#
     comments = relationship("Comment", back_populates="parent_post")
 
+class PostForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    body = TextAreaField('Body', validators=[DataRequired()])
+    submit = SubmitField('Submit')
 
 class Comment(db.Model):
     __tablename__ = "comments"
@@ -209,6 +214,20 @@ def add_new_post():
         return redirect(url_for("get_all_posts"))
     return render_template("make-post.html", form=form, current_user=current_user)
 
+@app.route('/create-post', methods=['GET', 'POST'])
+@login_required
+def create_post():
+    form = PostForm()
+    if form.validate_on_submit():
+        new_post = Post(
+            title=form.title.data,
+            body=form.body.data,
+            author=current_user
+        )
+        db.session.add(new_post)
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('make-post.html', form=form)
 
 @app.route("/edit-post/<int:post_id>", methods=['GET', 'POST'])
 @login_required
@@ -257,6 +276,10 @@ def delete_comment(comment_id):
     db.session.delete(comment_to_delete)
     db.session.commit()
     return redirect(url_for('show_post', post_id=comment_to_delete.post_id))
+
+@app.route('/forgot-password')
+def forgot_password():
+    return render_template('forgot_password.html')
 
 
 if __name__ == "__main__":
