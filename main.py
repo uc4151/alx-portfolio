@@ -1,6 +1,6 @@
-from flask import Flask, render_template, redirect, url_for, flash, request
+from flask import Flask, render_template, render_template_string, redirect, url_for, flash, request
 from flask_bootstrap import Bootstrap
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, CSRFProtect
 from wtforms import StringField, TextAreaField, SubmitField
 from wtforms.validators import DataRequired
 from datetime import datetime
@@ -14,6 +14,7 @@ from flask import abort
 import hashlib
 from dotenv import load_dotenv
 from email_sender import EmailSender
+from flask_migrate import Migrate
 import os
 
 load_dotenv()
@@ -24,12 +25,16 @@ app.config['SECRET_KEY'] = os.getenv('SECRETKEY')
 Bootstrap(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
+csrf = CSRFProtect(app)
+# Add 'wtf' global for Jinja2
+app.jinja_env.globals['wtf'] = FlaskForm
 
 # CONNECT TO DB
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/blogpost.db'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.root_path, 'instance', 'blogpost.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
 class User(UserMixin, db.Model):
@@ -38,21 +43,20 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
     name = db.Column(db.String(100))
-    posts = relationship("BlogPost", back_populates="author")
+    posts = relationship("Post", back_populates="author")
     comments = relationship("Comment", back_populates="comment_author")
 
-
-class BlogPost(db.Model):
-    __tablename__ = "blog_posts"
+class Post(db.Model):
+    __tablename__ = "posts"
     id = db.Column(db.Integer, primary_key=True)
-    author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    author = relationship("User", back_populates="posts")
-    title = db.Column(db.String(250), unique=True, nullable=False)
-    subtitle = db.Column(db.String(250), nullable=False)
-    date = db.Column(db.String(250), nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    subtitle = db.Column(db.String(100), nullable=False)
+    img_url = db.Column(db.String(200), nullable=False)
     body = db.Column(db.Text, nullable=False)
-    img_url = db.Column(db.String(250), nullable=False)
-    
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    author = relationship("User", back_populates="posts")
+    date = db.Column(db.String(100), nullable=False)
+
     #***************Parent Relationship*************#
     comments = relationship("Comment", back_populates="parent_post")
 
@@ -64,15 +68,13 @@ class PostForm(FlaskForm):
 class Comment(db.Model):
     __tablename__ = "comments"
     id = db.Column(db.Integer, primary_key=True)
-    author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    comment_author = relationship("User", back_populates="comments")
-    
-    #***************Child Relationship*************#
-    post_id = db.Column(db.Integer, db.ForeignKey("blog_posts.id"))
-    parent_post = relationship("BlogPost", back_populates="comments")
     text = db.Column(db.Text, nullable=False)
-    time = db.Column(db.String(250), nullable=False)
-
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=False)
+    comment_author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Relationships
+    parent_post = relationship("Post", back_populates="comments")
+    comment_author = relationship("User", back_populates="comments")
 
 def admin_only(f):
     @wraps(f)
@@ -92,7 +94,7 @@ def load_user(user_id):
 
 @app.route('/')
 def get_all_posts():
-    posts = BlogPost.query.all()
+    posts = Post.query.all()
     return render_template("index.html", all_posts=posts, current_user=current_user)
 
 
@@ -103,13 +105,13 @@ def register():
         if User.query.filter_by(email=form.email.data).first():
             return redirect(url_for('login', flash=flash("Email already exist, login instead")))
         print(form.password.data)
-        if form.password.data == form.password_confirmation.data:
+        if form.password.data == form.confirm_password.data:
             p_word = generate_password_hash(form.password.data, "pbkdf2:sha256", 8)
         else:
             flash("Passwords don't match, please try again.")
             return redirect(url_for("register"))
         new_user = User(
-            name=form.name.data,
+            name=form.username.data,
             email=form.email.data,
             password=p_word
         )
@@ -156,7 +158,7 @@ def gravatar_url(email, size=200):
 @app.route("/post/<int:post_id>", methods=['GET', 'POST'])
 def show_post(post_id):
     form = CommentForm()
-    requested_post = BlogPost.query.get(post_id)
+    requested_post = Post.query.get(post_id)
     for comment in requested_post.comments:
         comment.avatar_url = gravatar_url(comment.comment_author.email)
     if form.validate_on_submit():
@@ -201,7 +203,7 @@ def contact():
 def add_new_post():
     form = CreatePostForm()
     if form.validate_on_submit():
-        new_post = BlogPost(
+        new_post = Post(
             title=form.title.data,
             subtitle=form.subtitle.data,
             body=form.body.data,
@@ -217,12 +219,15 @@ def add_new_post():
 @app.route('/create-post', methods=['GET', 'POST'])
 @login_required
 def create_post():
-    form = PostForm()
+    form = CreatePostForm()
     if form.validate_on_submit():
         new_post = Post(
             title=form.title.data,
+            subtitle=form.subtitle.data,  # Handle subtitle field
+            img_url=form.img_url.data,
             body=form.body.data,
-            author=current_user
+            author=current_user,
+            date=datetime.now().strftime("%B %d, %Y")
         )
         db.session.add(new_post)
         db.session.commit()
@@ -233,7 +238,7 @@ def create_post():
 @login_required
 @admin_only
 def edit_post(post_id):
-    post = BlogPost.query.get(post_id)
+    post = Post.query.get(post_id)
     edit_form = CreatePostForm(
         title=post.title,
         subtitle=post.subtitle,
@@ -262,7 +267,7 @@ def edit_post(post_id):
 @login_required
 @admin_only
 def delete_post(post_id):
-    post_to_delete = BlogPost.query.get(post_id)
+    post_to_delete = Post.query.get(post_id)
     db.session.delete(post_to_delete)
     db.session.commit()
     return redirect(url_for('get_all_posts'))

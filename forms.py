@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, EmailField, TextAreaField
-from wtforms.validators import DataRequired, URL, EqualTo
+from wtforms.validators import DataRequired, Email, EqualTo, URL
 
 # WTForm
 class CreatePostForm(FlaskForm):
@@ -11,8 +11,11 @@ class CreatePostForm(FlaskForm):
     submit = SubmitField("Submit Post")
 
 class RegisterForm(FlaskForm):
-    email = EmailField("Enter your email", validators=[DataRequired()])
-    password = PasswordField("Password", validators=[DataRequired()])
+    username = StringField('Username', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('Register')
 
 class LoginForm(FlaskForm):
     email = EmailField("Enter your email", validators=[DataRequired()])
