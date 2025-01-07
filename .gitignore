@@ -154,6 +154,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Specify line-ending rules
+.gitattributes
+
 # pytype static type analyzer
 .pytype/
 

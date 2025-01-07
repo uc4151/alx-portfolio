@@ -35,3 +35,10 @@ class EmailForm(FlaskForm):
     email = EmailField("Your email", validators=[DataRequired()])
     message = TextAreaField("Message", validators=[DataRequired()])
     submit = SubmitField("Submit Comment")
+
+class ProfileForm(FlaskForm):
+    name = StringField("Name", validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired(), Email()])
+    bio = TextAreaField("Bio")
+    profile_picture = FileField("Upload Profile Picture")
+    submit = SubmitField("Update Profile")

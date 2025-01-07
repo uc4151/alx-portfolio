@@ -44,6 +44,8 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
     name = db.Column(db.String(100))
+    profile_picture = db.Column(db.String(200), nullable=True)
+    bio = db.Column(db.Text, nullable=True) 
     posts = relationship("Post", back_populates="author")
     comments = relationship("Comment", back_populates="comment_author")
 
@@ -294,6 +296,37 @@ def delete_comment(comment_id):
 @app.route('/forgot-password')
 def forgot_password():
     return render_template('forgot_password.html')
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    form = ProfileForm()
+    if form.validate_on_submit():
+        current_user.name = form.name.data
+        current_user.email = form.email.data
+        current_user.bio = form.bio.data
+        profile_picture = form.profile_picture.data
+        if profile_picture:
+            filename = secure_filename(profile_picture.filename)
+            upload_folder = os.path.join(app.root_path, 'static/uploads')
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder)
+            profile_picture_path = os.path.join(upload_folder, filename)
+            profile_picture.save(profile_picture_path)
+            current_user.profile_picture = url_for('static', filename='uploads/' + filename)
+        db.session.commit()
+        flash('Your profile has been updated!', 'success')
+        return redirect(url_for('profile'))
+    elif request.method == 'GET':
+        form.name.data = current_user.name
+        form.email.data = current_user.email
+        form.bio.data = current_user.bio
+    return render_template('profile.html', form=form)
+
+@app.route('/user/<int:user_id>')
+def user_profile(user_id):
+    user = User.query.get_or_404(user_id)
+    return render_template('user_profile.html', user=user)
 
 
 if __name__ == "__main__":
