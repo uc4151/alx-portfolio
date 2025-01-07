@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}My Blog{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 </head>
 <body>
     <header>
@@ -21,7 +22,7 @@
         {% block content %}{% endblock %}
     </main>
     <footer>
-        <p>&copy; 2023 My Blog</p>
+        <p>&copy; 2024 My Blog</p>
     </footer>
 </body>
 </html>

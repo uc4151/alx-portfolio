@@ -15,6 +15,7 @@ import hashlib
 from dotenv import load_dotenv
 from email_sender import EmailSender
 from flask_migrate import Migrate
+from werkzeug.utils import secure_filename
 import os
 
 load_dotenv()
@@ -51,11 +52,11 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     subtitle = db.Column(db.String(100), nullable=False)
-    img_url = db.Column(db.String(200), nullable=False)
     body = db.Column(db.Text, nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     author = relationship("User", back_populates="posts")
     date = db.Column(db.String(100), nullable=False)
+    image_url = db.Column(db.String(200), nullable=True)
 
     #***************Parent Relationship*************#
     comments = relationship("Comment", back_populates="parent_post")
@@ -207,7 +208,6 @@ def add_new_post():
             title=form.title.data,
             subtitle=form.subtitle.data,
             body=form.body.data,
-            img_url=form.img_url.data,
             author=current_user,
             date=datetime.now().strftime("%B %d, %Y %H:%M:%S")
         )
@@ -221,17 +221,28 @@ def add_new_post():
 def create_post():
     form = CreatePostForm()
     if form.validate_on_submit():
+        image = form.image.data
+        if image:
+            filename = secure_filename(image.filename)
+            upload_folder = os.path.join(app.root_path, 'static/uploads')
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder)
+            image_path = os.path.join(upload_folder, filename)
+            image.save(image_path)
+            image_url = url_for('static', filename='uploads/' + filename)
+        else:
+            image_url = None
         new_post = Post(
             title=form.title.data,
-            subtitle=form.subtitle.data,  # Handle subtitle field
-            img_url=form.img_url.data,
+            subtitle=form.subtitle.data,
             body=form.body.data,
+            image_url=image_url,
             author=current_user,
             date=datetime.now().strftime("%B %d, %Y")
         )
         db.session.add(new_post)
         db.session.commit()
-        return redirect(url_for('index'))
+        return redirect(url_for('get_all_posts'))
     return render_template('make-post.html', form=form)
 
 @app.route("/edit-post/<int:post_id>", methods=['GET', 'POST'])
@@ -242,14 +253,12 @@ def edit_post(post_id):
     edit_form = CreatePostForm(
         title=post.title,
         subtitle=post.subtitle,
-        img_url=post.img_url,
         author=post.author,
         body=post.body
     )
     if edit_form.validate_on_submit():
         post.title = edit_form.title.data
         post.subtitle = edit_form.subtitle.data
-        post.img_url = edit_form.img_url.data
         print(current_user.name)
         author = User.query.filter_by(name=current_user.name).first()
         if author:

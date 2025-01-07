@@ -30,7 +30,6 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('title', sa.String(length=100), nullable=False),
     sa.Column('subtitle', sa.String(length=100), nullable=False),
-    sa.Column('img_url', sa.String(length=200), nullable=False),
     sa.Column('body', sa.Text(), nullable=False),
     sa.Column('author_id', sa.Integer(), nullable=True),
     sa.Column('date', sa.String(length=100), nullable=False),
