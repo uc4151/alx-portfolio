@@ -1,6 +1,5 @@
 {% include "header.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
-
 <!-- Page Header -->
 <header class="masthead" style="
     background-image: url('{{ url_for('static', filename='img/bg4.jpeg') }}'); 
@@ -32,6 +31,27 @@
 <div class="container">
   <div class="row">
     <div class="col-lg-8 col-md-10 mx-auto">
+      <!-- Profile Menu -->
+      <div class="profile-menu">
+        <a href="javascript:void(0)" onclick="openProfileSidebar()">Profile</a>
+      </div>
+
+      <!-- Profile Sidebar -->
+      <div id="profileSidebar" class="sidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeProfileSidebar()">&times;</a>
+        <div class="profile-content">
+          <h2>{{ current_user.name }}</h2>
+          {% if current_user.profile_picture %}
+          <img src="{{ current_user.profile_picture }}" alt="Profile Picture" class="img-fluid rounded-circle">
+          {% else %}
+          <img src="{{ url_for('static', filename='default_profile.png') }}" alt="Profile Picture" class="img-fluid rounded-circle">
+          {% endif %}
+          <p>{{ current_user.bio }}</p>
+          <p>Email: {{ current_user.email }}</p>
+        </div>
+      </div>
+
+      <hr>
       {% for post in all_posts %}
       <div class="post-preview">
         <a href="{{ url_for('show_post', post_id=post.id) }}">
