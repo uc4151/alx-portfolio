@@ -55,10 +55,11 @@ class Post(db.Model):
     title = db.Column(db.String(100), nullable=False)
     subtitle = db.Column(db.String(100), nullable=False)
     body = db.Column(db.Text, nullable=False)
+    image_url = db.Column(db.String(200), nullable=True)
+    category = db.Column(db.String(50), nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     author = relationship("User", back_populates="posts")
     date = db.Column(db.String(100), nullable=False)
-    image_url = db.Column(db.String(200), nullable=True)
 
     #***************Parent Relationship*************#
     comments = relationship("Comment", back_populates="parent_post")
@@ -97,9 +98,15 @@ def load_user(user_id):
 
 @app.route('/')
 def get_all_posts():
-    posts = Post.query.all()
+    category = request.args.get('category')
+    search = request.args.get('search')
+    if category:
+        posts = Post.query.filter_by(category=category).all()
+    elif search:
+        posts = Post.query.filter(Post.title.contains(search)).all()
+    else:
+        posts = Post.query.all()
     return render_template("index.html", all_posts=posts, current_user=current_user)
-
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
@@ -234,18 +241,20 @@ def create_post():
             image_url = url_for('static', filename='uploads/' + filename)
         else:
             image_url = None
+
         new_post = Post(
             title=form.title.data,
             subtitle=form.subtitle.data,
             body=form.body.data,
             image_url=image_url,
+            category=form.category.data,  # Save the category
             author=current_user,
             date=datetime.now().strftime("%B %d, %Y")
         )
         db.session.add(new_post)
         db.session.commit()
         return redirect(url_for('get_all_posts'))
-    return render_template('make-post.html', form=form)
+    return render_template('make-post.html', form=form, current_user=current_user)
 
 @app.route("/edit-post/<int:post_id>", methods=['GET', 'POST'])
 @login_required

@@ -55,8 +55,12 @@
   CKEDITOR.replace('body', {
     removePlugins: 'easyimage,cloudservices',
     on: {
-      instanceReady: function() {
-        this.document.appendStyleText('.cke_top { display: none !important; }');
+      instanceReady: function () {
+        // Hide notification
+        const notification = document.querySelector('.cke_notification_message');
+        if (notification) {
+          notification.style.display = 'none';
+        }
       }
     }
   });

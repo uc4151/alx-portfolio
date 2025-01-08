@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, EmailField, TextAreaField, FileField
+from wtforms import StringField, SubmitField, PasswordField, EmailField, TextAreaField, FileField, SelectField
 from wtforms.validators import DataRequired, Email, EqualTo, URL
 
 # WTForm
@@ -8,6 +8,7 @@ class CreatePostForm(FlaskForm):
     subtitle = StringField("Subtitle", validators=[DataRequired()])
     body = TextAreaField("Blog Content", validators=[DataRequired()])
     image = FileField("Upload Image")
+    category = SelectField("Category", choices=[('Lifestyle', 'Lifestyle'), ('Wellbeing', 'Wellbeing'), ('Entertainment', 'Entertainment'), ('World News', 'World News'), ('Sports', 'Sports')], validators=[DataRequired()])
     submit = SubmitField("Submit Post")
 
 class RegisterForm(FlaskForm):

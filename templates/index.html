@@ -52,6 +52,26 @@
       </div>
 
       <hr>
+      <!-- Category Filter -->
+      <form method="GET" action="{{ url_for('get_all_posts') }}">
+        <select name="category" onchange="this.form.submit()">
+          <option value="">All Categories</option>
+          <option value="Lifestyle">Lifestyle</option>
+          <option value="Wellbeing">Wellbeing</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="World News">World News</option>
+          <option value="Sports">Sports</option>
+        </select>
+      </form>
+      <!-- Search Form -->
+      <form method="GET" action="{{ url_for('get_all_posts') }}" class="search-form">
+        <input type="text" name="search" placeholder="Search by title...">
+        <button type="submit">Search</button>
+      </form>
+      <hr>
+      {% if not all_posts %}
+      <p>No posts found.</p>
+      {% endif %}
       {% for post in all_posts %}
       <div class="post-preview">
         <a href="{{ url_for('show_post', post_id=post.id) }}">
