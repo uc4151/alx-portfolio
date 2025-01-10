@@ -24,6 +24,9 @@
 
   <!-- Post Content -->
   <article>
+    {% if current_user.is_authenticated and (current_user.id == post.author.id or current_user.id == 1) %}
+      <a href="{{ url_for('edit_post', post_id=post.id) }}" class="btn btn-primary">Edit Post</a>
+      {% endif %}
     <div class="container">
       <div class="row">
         <div class="col-lg-8 col-md-10 mx-auto">
@@ -39,11 +42,6 @@
 
 
 <!--           Comments Area -->
-          <script src="{{ url_for('static', filename='ckeditor/ckeditor.js') }}"></script>
-          <textarea name="content" id="editor" required></textarea>
-          <script>
-            CKEDITOR.replace('editor');
-          </script>
           {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}) }}
           <div class="col-lg-8 col-md-10 mx-auto comment">
             {% for comment in post.comments: %}

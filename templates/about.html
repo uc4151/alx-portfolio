@@ -16,15 +16,64 @@
   </header>
 
   <!-- Main Content -->
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-8 col-md-10 mx-auto">
-        <p>Our app is a dynamic blogging platform designed to foster community interaction through the sharing of posts and ideas. Users can register and log in securely to create blog posts on various topics, comment on existing articles, and engage with other users. With a seamless interface powered by Flask, Bootstrap, and CKEditor, the app allows for easy content creation, editing, and interaction. Posts are displayed with essential information such as the title, subtitle, and publication date, while users can enrich the content with images and comments.</p>
-        <p>For added security, the app incorporates password hashing using the pbkdf2:sha256 method, ensuring that user data is protected. Admins have special privileges to create, edit, and delete posts, while registered users can contribute by leaving comments. Each user interaction, including post creation and commenting, is timestamped, promoting accountability and transparency. Additionally, the app integrates Gravatar for user avatars and provides a visually appealing experience for all users.</p>
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-lg-8 col-md-10 mx-auto">
+      <h1 class="text-center my-4">About Intel-Vibez Blog</h1>
+      <p class="lead text-center">Welcome to Intel-Vibez Blog, your go-to source for the latest in Lifestyle, Wellbeing, Entertainment, World News, and Sports.</p>
+      
+      <hr>
+
+      <div class="about-section">
+        <h2>Our Mission</h2>
+        <p>At Intel-Vibez Blog, our mission is to provide our readers with insightful and engaging content that enriches their lives. We strive to cover a wide range of topics that cater to diverse interests and preferences.</p>
+      </div>
+
+      <hr>
+
+      <div class="team-section">
+        <h2>Some of our contents</h2>
+        <div class="row">
+          <div class="col-md-4 text-center">
+            <img src="{{ url_for('static', filename='img/aboutworld.jpeg') }}" alt="world" class="img-fluid rounded-circle mb-2">
+            <h4>World News</h4>
+            <p>We feed you rich contents about things happening around you</p>
+          </div>
+          <div class="col-md-4 text-center">
+            <img src="{{ url_for('static', filename='img/aboutmusic.jpeg') }}" alt="music" class="img-fluid rounded-circle mb-2">
+            <h4>Entertainment</h4>
+            <p>You get to read entertaining posts about virtually everything you care for</p>
+          </div>
+          <div class="col-md-4 text-center">
+            <img src="{{ url_for('static', filename='img/lifestyle.jpeg') }}" alt="lifestyle" class="img-fluid rounded-circle mb-2">
+            <h4>Lifestyles</h4>
+            <p>We deliver rich contents about how you should fashion your life to be proud of it</p>
+          </div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="testimonials-section">
+        <h2>What Our Readers Say</h2>
+        <div class="testimonial">
+          <p>"Intel-Vibez Blog is my daily dose of inspiration. The articles are well-written and always relevant." - Sarah K.</p>
+        </div>
+        <div class="testimonial">
+          <p>"I love the variety of topics covered on Intel-Vibez Blog. There's something for everyone!" - Michael T.</p>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="contact-section">
+        <h2>Contact Us</h2>
+        <p>If you have any questions, suggestions, or feedback, feel free to reach out to us at <a href="mailto:info@intelvibezblog.com">info@intelvibezblog.com</a>.</p>
       </div>
     </div>
   </div>
-
-  <hr>
+</div>
+{% endblock %}
 
   {% include "footer.html" %}

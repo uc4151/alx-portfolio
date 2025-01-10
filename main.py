@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 from email_sender import EmailSender
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
+from flask_wtf.csrf import generate_csrf
 import os
 
 load_dotenv()
@@ -106,7 +107,9 @@ def get_all_posts():
         posts = Post.query.filter(Post.title.contains(search)).all()
     else:
         posts = Post.query.all()
-    return render_template("index.html", all_posts=posts, current_user=current_user)
+    csrf_token = generate_csrf()
+    return render_template("index.html", all_posts=posts, current_user=current_user, csrf_token=csrf_token)
+
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
@@ -165,26 +168,20 @@ def gravatar_url(email, size=200):
     return f"https://www.gravatar.com/avatar/{email_hash}?d=identicon&s={size}"
 
 
-@app.route("/post/<int:post_id>", methods=['GET', 'POST'])
+@app.route("/post/<int:post_id>", methods=["GET", "POST"])
 def show_post(post_id):
+    post = Post.query.get_or_404(post_id)
     form = CommentForm()
-    requested_post = Post.query.get(post_id)
-    for comment in requested_post.comments:
-        comment.avatar_url = gravatar_url(comment.comment_author.email)
     if form.validate_on_submit():
-        if current_user.is_authenticated:
-            new_comment = Comment(
-                text=form.comments.data,
-                comment_author=current_user,
-                parent_post=requested_post,
-                time=datetime.now().strftime("%B %d, %Y %H:%M:%S")
-            )
-            db.session.add(new_comment)
-            db.session.commit()
-        else:
-            return redirect(url_for('login', flash=flash('You need to login to comment')))
-    return render_template("post.html", post=requested_post, form=form, current_user=current_user)
-
+        new_comment = Comment(
+            text=form.text.data,
+            post_id=post.id,
+            comment_author_id=current_user.id
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+        return redirect(url_for('show_post', post_id=post.id))
+    return render_template("post.html", post=post, form=form, current_user=current_user)
 
 @app.route("/about")
 def about():
@@ -253,49 +250,55 @@ def create_post():
         )
         db.session.add(new_post)
         db.session.commit()
+        print("Post created successfully")  # Debug statement
         return redirect(url_for('get_all_posts'))
+    else:
+        print("Form validation failed")  # Debug statement
+        print(form.errors)  # Debug statement
     return render_template('make-post.html', form=form, current_user=current_user)
 
 @app.route("/edit-post/<int:post_id>", methods=['GET', 'POST'])
 @login_required
-@admin_only
 def edit_post(post_id):
-    post = Post.query.get(post_id)
-    edit_form = CreatePostForm(
-        title=post.title,
-        subtitle=post.subtitle,
-        author=post.author,
-        body=post.body
-    )
-    if edit_form.validate_on_submit():
-        post.title = edit_form.title.data
-        post.subtitle = edit_form.subtitle.data
-        print(current_user.name)
-        author = User.query.filter_by(name=current_user.name).first()
-        if author:
-            post.author = author
-        else:
-            flash("Author not found!", category="error")
-        post.body = edit_form.body.data
+    post = Post.query.get_or_404(post_id)
+    if post.author != current_user and current_user.id != 1:
+        abort(403)
+    form = CreatePostForm()
+    if form.validate_on_submit():
+        post.title = form.title.data
+        post.subtitle = form.subtitle.data
+        post.body = form.body.data
+        post.category = form.category.data
+        if form.image.data:
+            filename = secure_filename(form.image.data.filename)
+            upload_folder = os.path.join(app.root_path, 'static/uploads')
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder)
+            image_path = os.path.join(upload_folder, filename)
+            form.image.data.save(image_path)
+            post.image_url = url_for('static', filename='uploads/' + filename)
         db.session.commit()
-        return redirect(url_for("show_post", post_id=post.id))
+        return redirect(url_for('get_all_posts'))
+    elif request.method == 'GET':
+        form.title.data = post.title
+        form.subtitle.data = post.subtitle
+        form.body.data = post.body
+        form.category.data = post.category
+    return render_template('make-post.html', form=form, current_user=current_user, post=post)
 
-    return render_template("make-post.html", form=edit_form, is_edit=True, current_user=current_user)
 
-
-@app.route("/delete/<int:post_id>")
+@app.route("/delete-post/<int:post_id>", methods=['POST'])
 @login_required
-@admin_only
 def delete_post(post_id):
-    post_to_delete = Post.query.get(post_id)
-    db.session.delete(post_to_delete)
+    post = Post.query.get_or_404(post_id)
+    if post.author != current_user and current_user.id != 1:
+        abort(403)
+    db.session.delete(post)
     db.session.commit()
     return redirect(url_for('get_all_posts'))
 
-
 @app.route("/delete-comment/<int:comment_id>", methods=["GET", "POST"])
 @login_required
-@admin_only
 def delete_comment(comment_id):
     comment_to_delete = Comment.query.get(comment_id)
     db.session.delete(comment_to_delete)
