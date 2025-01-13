@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, EmailField, TextAreaField, FileField, SelectField
 from wtforms.validators import DataRequired, Email, EqualTo, URL
+from flask_wtf.file import FileAllowed
 
 # WTForm
 class CreatePostForm(FlaskForm):
@@ -41,5 +42,5 @@ class ProfileForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired(), Email()])
     bio = TextAreaField("Bio")
-    profile_picture = FileField("Upload Profile Picture")
+    profile_picture = FileField("Upload Profile Picture", validators=[FileAllowed(['jpg', 'png', 'jpeg'])])
     submit = SubmitField("Update Profile")

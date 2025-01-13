@@ -17,19 +17,26 @@ from email_sender import EmailSender
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from flask_wtf.csrf import generate_csrf
+import time
 import os
+import uuid
 
 load_dotenv()
 email_sender = EmailSender()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = os.getenv('SECRETKEY')
 Bootstrap(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
+login_manager.login_view = 'login'
 csrf = CSRFProtect(app)
 # Add 'wtf' global for Jinja2
 app.jinja_env.globals['wtf'] = FlaskForm
+
+@app.context_processor
+def inject_time():
+    return dict(time=time)
 
 # CONNECT TO DB
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/blogpost.db'
@@ -313,33 +320,41 @@ def forgot_password():
 @login_required
 def profile():
     form = ProfileForm()
+    profile_picture = None  # Initialize the variable
+
     if form.validate_on_submit():
         current_user.name = form.name.data
         current_user.email = form.email.data
         current_user.bio = form.bio.data
         profile_picture = form.profile_picture.data
+
         if profile_picture:
-            filename = secure_filename(profile_picture.filename)
+            # Generate a unique filename to prevent overwriting
+            unique_filename = str(uuid.uuid4()) + "_" + secure_filename(profile_picture.filename)
             upload_folder = os.path.join(app.root_path, 'static/uploads')
             if not os.path.exists(upload_folder):
                 os.makedirs(upload_folder)
-            profile_picture_path = os.path.join(upload_folder, filename)
+
+            profile_picture_path = os.path.join(upload_folder, unique_filename)
             profile_picture.save(profile_picture_path)
-            current_user.profile_picture = url_for('static', filename='uploads/' + filename)
+            current_user.profile_picture = 'uploads/' + unique_filename
+            print(f"Profile picture saved at: {profile_picture_path}")  # Debug statement
+            
         db.session.commit()
         flash('Your profile has been updated!', 'success')
-        return redirect(url_for('profile'))
+        return redirect(url_for('get_all_posts'))
+
     elif request.method == 'GET':
         form.name.data = current_user.name
         form.email.data = current_user.email
         form.bio.data = current_user.bio
-    return render_template('profile.html', form=form)
+
+    return render_template('profile.html', form=form, current_user=current_user, time=time)
 
 @app.route('/user/<int:user_id>')
 def user_profile(user_id):
     user = User.query.get_or_404(user_id)
-    return render_template('user_profile.html', user=user)
-
+    return render_template('user_profile.html', user=user, current_user=current_user)
 
 if __name__ == "__main__":
     with app.app_context():

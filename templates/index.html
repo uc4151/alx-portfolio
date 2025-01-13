@@ -42,7 +42,7 @@
         <div class="profile-content">
           <h2>{{ current_user.name }}</h2>
           {% if current_user.profile_picture %}
-          <img src="{{ current_user.profile_picture }}" alt="Profile Picture" class="img-fluid rounded-circle">
+          <img src="{{ url_for('static', filename=current_user.profile_picture) }}" alt="Profile Picture" class="img-fluid rounded-circle">
           {% else %}
           <img src="{{ url_for('static', filename='default_profile.png') }}" alt="Profile Picture" class="img-fluid rounded-circle">
           {% endif %}

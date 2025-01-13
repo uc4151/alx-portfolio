@@ -4,11 +4,20 @@
   <div class="row">
     <div class="col-lg-8 col-md-10 mx-auto">
       <h2 class="text-center">{{ user.name }}</h2>
+      
       {% if user.profile_picture %}
       <img src="{{ user.profile_picture }}" alt="Profile Picture" class="img-fluid rounded-circle">
       {% endif %}
+      
       <p>{{ user.bio }}</p>
       <p>Email: {{ user.email }}</p>
+
+      {% if current_user.is_authenticated and current_user.id == user.id %}
+        <div class="text-center mt-3">
+          <a href="{{ url_for('profile') }}" class="btn btn-primary">Edit Profile</a>
+        </div>
+      {% endif %}
+
     </div>
   </div>
 </div>

@@ -82,6 +82,25 @@
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('create_post') }}">Create Post</a>
           </li>
+          {% if current_user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('profile') }}">Edit Profile</a>
+        </li>
+          {% endif %}
+
+          {% if current_user.is_authenticated %}
+  <li class="nav-item">
+    <a class="nav-link" href="{{ url_for('profile') }}">
+      {% if current_user.profile_picture %}
+      <img src="{{ url_for('static', filename=current_user.profile_picture) }}?v={{ time.time() }}" alt="Profile Picture" class="rounded-circle" style="width: 40px; height: 40px;">
+      {% else %}
+      <img src="{{ url_for('static', filename='default_profile.png') }}?v={{ time.time() }}" alt="Profile Picture" class="rounded-circle" style="width: 40px; height: 40px;">
+      {% endif %}
+    </a>
+  </li>
+{% endif %}
+        </a>
+      </li>
         </ul>
       </div>
     </div>
