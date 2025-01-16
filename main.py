@@ -53,7 +53,8 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(100))
     name = db.Column(db.String(100))
     profile_picture = db.Column(db.String(200), nullable=True)
-    bio = db.Column(db.Text, nullable=True) 
+    bio = db.Column(db.Text, nullable=True)
+    username = db.Column(db.String(100), unique=True, nullable=False) 
     posts = relationship("Post", back_populates="author")
     comments = relationship("Comment", back_populates="comment_author")
 
@@ -141,27 +142,23 @@ def register():
     return render_template("register.html", form=form, current_user=current_user)
 
 
-@app.route('/login', methods=["GET", "POST"])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('get_all_posts'))
     form = LoginForm()
     if form.validate_on_submit():
-        email = form.email.data
-        password = form.password.data
-
-        user = User.query.filter_by(email=email).first()
-        # Email doesn't exist
-        if not user:
-            flash("That email does not exist, please try again.")
-            return redirect(url_for('login'))
-        # Password incorrect
-        elif not check_password_hash(user.password, password):
-            flash('Password incorrect, please try again.')
-            return redirect(url_for('login'))
-        else:
+        user = User.query.filter(
+            (User.username == form.username_or_email.data) | 
+            (User.email == form.username_or_email.data)
+        ).first()
+        if user and check_password_hash(user.password, form.password.data):
             login_user(user)
+            flash('Login successful!', 'success')
             return redirect(url_for('get_all_posts'))
-    return render_template("login.html", form=form, current_user=current_user)
-
+        else:
+            flash('Login unsuccessful. Please check username/email and password', 'danger')
+    return render_template('login.html', form=form)
 
 @app.route('/logout')
 @login_required
@@ -339,7 +336,7 @@ def profile():
             profile_picture.save(profile_picture_path)
             current_user.profile_picture = 'uploads/' + unique_filename
             print(f"Profile picture saved at: {profile_picture_path}")  # Debug statement
-            
+
         db.session.commit()
         flash('Your profile has been updated!', 'success')
         return redirect(url_for('get_all_posts'))
