@@ -124,22 +124,21 @@ def register():
     form = RegisterForm()
     if request.method == "POST":
         if User.query.filter_by(email=form.email.data).first():
-            return redirect(url_for('login', flash=flash("Email already exist, login instead")))
+            flash("Email already exists, please log in instead.", "warning")
+            return redirect(url_for('login'))
         print(form.password.data)
-        if form.password.data == form.confirm_password.data:
-            p_word = generate_password_hash(form.password.data, "pbkdf2:sha256", 8)
-        else:
-            flash("Passwords don't match, please try again.")
-            return redirect(url_for("register"))
-        new_user = User(
-            name=form.username.data,
-            email=form.email.data,
-            password=p_word
-        )
-        db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for("login"))
-    return render_template("register.html", form=form, current_user=current_user)
+       if form.validate_on_submit():
+    p_word = generate_password_hash(form.password.data, "pbkdf2:sha256", 8)
+    new_user = User(
+        name=form.username.data,
+        email=form.email.data,
+        password=p_word
+    )
+    db.session.add(new_user)
+    db.session.commit()
+    login_user(new_user)  # Automatically log in the user after signup
+    flash("Registration successful! Welcome to Intelvibez!", "success")
+    return redirect(url_for("get_all_posts"))  # Redirect to home page
 
 
 @app.route('/login', methods=['GET', 'POST'])
