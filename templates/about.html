@@ -1,14 +1,16 @@
 {% include "header.html" %}
+<!-- Includes the header template for consistent navigation and styling across pages -->
 
   <!-- Page Header -->
   <header class="masthead" style="background-image: url({{ url_for('static', filename='img/about-bg.jpg')}})">
-    <div class="overlay"></div>
+    <!-- Background image for the About page header -->
+    <div class="overlay"></div> <!-- Overlay for better text visibility on the image -->
     <div class="container">
       <div class="row">
         <div class="col-lg-8 col-md-10 mx-auto">
           <div class="page-heading">
-            <h1>About Us</h1>
-            <span class="subheading">This is what we do.</span>
+            <h1>About Us</h1> <!-- Main heading for the page -->
+            <span class="subheading">This is what we do.</span> <!-- Subheading description -->
           </div>
         </div>
       </div>
@@ -19,12 +21,15 @@
 {% block content %}
 <div class="container">
   <div class="row">
-    <div class="col-lg-8 col-md-10 mx-auto">
+    <div class="col-lg-8 col-md-10 mx-auto"><div class="col-lg-8 col-md-10 mx-auto">
+
+      <!-- About Section Title -->
       <h1 class="text-center my-4">About Intel-Vibez Blog</h1>
       <p class="lead text-center">Welcome to Intel-Vibez Blog, your go-to source for the latest in Lifestyle, Wellbeing, Entertainment, World News, and Sports.</p>
       
-      <hr>
+      <hr>  <!-- Horizontal line for visual separation -->
 
+      <!-- Mission Statement Section -->
       <div class="about-section">
         <h2>Our Mission</h2>
         <p>At Intel-Vibez Blog, our mission is to provide our readers with insightful and engaging content that enriches their lives. We strive to cover a wide range of topics that cater to diverse interests and preferences.</p>
@@ -32,19 +37,25 @@
 
       <hr>
 
+      <!-- Content Highlights Section -->
       <div class="team-section">
         <h2>Some of our contents</h2>
         <div class="row">
+          <!-- World News Content Block -->
           <div class="col-md-4 text-center">
             <img src="{{ url_for('static', filename='img/aboutworld.jpeg') }}" alt="world" class="img-fluid rounded-circle mb-2">
             <h4>World News</h4>
             <p>We feed you rich contents about things happening around you</p>
           </div>
+
+          <!-- Entertainment Content Block -->
           <div class="col-md-4 text-center">
             <img src="{{ url_for('static', filename='img/aboutmusic.jpeg') }}" alt="music" class="img-fluid rounded-circle mb-2">
             <h4>Entertainment</h4>
             <p>You get to read entertaining posts about virtually everything you care for</p>
           </div>
+          
+          <!-- Lifestyle Content Block -->
           <div class="col-md-4 text-center">
             <img src="{{ url_for('static', filename='img/lifestyle.jpeg') }}" alt="lifestyle" class="img-fluid rounded-circle mb-2">
             <h4>Lifestyles</h4>
@@ -55,7 +66,8 @@
 
       <hr>
 
-      <div class="testimonials-section">
+      <!-- Testimonials Section --> 
+      div class="testimonials-section">
         <h2>What Our Readers Say</h2>
         <div class="testimonial">
           <p>"Intel-Vibez Blog is my daily dose of inspiration. The articles are well-written and always relevant." - Sarah K.</p>
@@ -67,6 +79,7 @@
 
       <hr>
 
+      <!-- Contact Information Section -->
       <div class="contact-section">
         <h2>Contact Us</h2>
         <p>If you have any questions, suggestions, or feedback, feel free to reach out to us at <a href="mailto:info@intelvibezblog.com">info@intelvibezblog.com</a>.</p>
@@ -76,4 +89,5 @@
 </div>
 {% endblock %}
 
-  {% include "footer.html" %}
+<!-- Includes the footer template for consistent design across pages -->  
+{% include "footer.html" %}

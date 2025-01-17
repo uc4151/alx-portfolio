@@ -2,15 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- Character Encoding -->
+
+    <!-- Responsive Design for Mobile Devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <!-- Dynamic Page Title -->
     <title>{% block title %}My Blog{% endblock %}</title>
+    <!-- Allows child templates to set custom page titles -->
+
+    <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <!-- Bootstrap Framework for Responsive Design -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 </head>
 <body>
+    <!-- Header with Navigation Bar -->
     <header>
         <nav>
             <ul>
+                <!-- Navigation Links -->
                 <li><a href="{{ url_for('get_all_posts') }}">Home</a></li>
                 <li><a href="{{ url_for('create_post') }}">Create Post</a></li>
                 <li><a href="{{ url_for('register') }}">Register</a></li>
@@ -18,14 +29,24 @@
             </ul>
         </nav>
     </header>
+
+    <!-- Main Content Block -->
     <main>
         {% block content %}{% endblock %}
+        <!-- This block will be replaced by page-specific content in child templates -->
     </main>
+
+    <!-- Footer Section -->
     <footer>
         <p>&copy; 2025 My Blog</p>
     </footer>
+
+    <!-- JavaScript File for Interactivity -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- Block for Page-Specific Scripts -->
   {% block scripts %}
   {% endblock %}
+  <!-- Allows child templates to include custom scripts if needed -->
 </body>
 </html>

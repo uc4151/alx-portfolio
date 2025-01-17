@@ -7,6 +7,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
+from sqlalchemy.exc import IntegrityError
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 from forms import CreatePostForm, RegisterForm, LoginForm, PostForm, CommentForm, EmailForm, ProfileForm
 from functools import wraps
@@ -21,19 +22,26 @@ import time
 import os
 import uuid
 
+# Load environment variables
 load_dotenv()
 email_sender = EmailSender()
 
+# Initialize Flask app
 app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = os.getenv('SECRETKEY')
 Bootstrap(app)
+
+# Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+# Enable CSRF protection
 csrf = CSRFProtect(app)
-# Add 'wtf' global for Jinja2
+# Added 'wtf' global for Jinja2
 app.jinja_env.globals['wtf'] = FlaskForm
 
+# Inject current time into Jinja templates
 @app.context_processor
 def inject_time():
     return dict(time=time)
@@ -42,10 +50,13 @@ def inject_time():
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/blogpost.db'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.root_path, 'instance', 'blogpost.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize SQLAlchemy and database migrations
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 
+# Define User model
 class User(UserMixin, db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
@@ -58,6 +69,7 @@ class User(UserMixin, db.Model):
     posts = relationship("Post", back_populates="author")
     comments = relationship("Comment", back_populates="comment_author")
 
+# Define Post model
 class Post(db.Model):
     __tablename__ = "posts"
     id = db.Column(db.Integer, primary_key=True)
@@ -78,6 +90,7 @@ class PostForm(FlaskForm):
     body = TextAreaField('Body', validators=[DataRequired()])
     submit = SubmitField('Submit')
 
+# Define Comment model
 class Comment(db.Model):
     __tablename__ = "comments"
     id = db.Column(db.Integer, primary_key=True)
@@ -89,6 +102,7 @@ class Comment(db.Model):
     parent_post = relationship("Post", back_populates="comments")
     comment_author = relationship("User", back_populates="comments")
 
+# Restrict access to admin users only
 def admin_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -100,11 +114,13 @@ def admin_only(f):
     return decorated_function
 
 
+# Load user session
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+# Homepage displaying all posts
 @app.route('/')
 def get_all_posts():
     category = request.args.get('category')
@@ -119,28 +135,68 @@ def get_all_posts():
     return render_template("index.html", all_posts=posts, current_user=current_user, csrf_token=csrf_token)
 
 
+# User registration route
 @app.route('/register', methods=["GET", "POST"])
 def register():
     form = RegisterForm()
+    
     if request.method == "POST":
-        if User.query.filter_by(email=form.email.data).first():
+        # Clean up form data
+        email = form.email.data.strip()
+        username = form.username.data.strip()
+        
+        # Check if email already exists
+        if User.query.filter_by(email=email).first():
             flash("Email already exists, please log in instead.", "warning")
             return redirect(url_for('login'))
-        print(form.password.data)
-       if form.validate_on_submit():
-    p_word = generate_password_hash(form.password.data, "pbkdf2:sha256", 8)
-    new_user = User(
-        name=form.username.data,
-        email=form.email.data,
-        password=p_word
-    )
-    db.session.add(new_user)
-    db.session.commit()
-    login_user(new_user)  # Automatically log in the user after signup
-    flash("Registration successful! Welcome to Intelvibez!", "success")
-    return redirect(url_for("get_all_posts"))  # Redirect to home page
+
+        # Check if username already exists
+        if User.query.filter_by(username=username).first():
+            flash("Username already taken, please choose another.", "warning")
+            return redirect(url_for('register'))
+
+        # Validate form input
+        if form.validate_on_submit():
+            try:
+                # Hash the password
+                p_word = generate_password_hash(form.password.data, "pbkdf2:sha256", 8)
+
+                # Create new user
+                new_user = User(
+                    username=username,
+                    email=email,
+                    password=p_word
+                )
+
+                # Add user to the database
+                db.session.add(new_user)
+                db.session.commit()
+
+                # Refresh user from database
+                db.session.refresh(new_user)
+
+                # Auto-login user
+                login_user(new_user)
+                flash("Registration successful! Welcome to Intelvibez!", "success")
+                return redirect(url_for("get_all_posts"))
+
+            except IntegrityError:
+                db.session.rollback()  # Undo any changes to prevent crashing
+                flash("An account with this email or username already exists. Please try again.", "danger")
+                return redirect(url_for('register'))
+
+            except Exception as e:
+                db.session.rollback()
+                flash(f"An unexpected error occurred: {str(e)}", "danger")
+                return redirect(url_for('register'))
+
+        else:
+            flash("Invalid input. Please correct the errors and try again.", "danger")
+
+    return render_template("register.html", form=form)
 
 
+# User login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -159,6 +215,7 @@ def login():
             flash('Login unsuccessful. Please check username/email and password', 'danger')
     return render_template('login.html', form=form)
 
+# User logout route
 @app.route('/logout')
 @login_required
 def logout():
@@ -166,11 +223,14 @@ def logout():
     return redirect(url_for('get_all_posts'))
 
 
+# Generate Gravatar URL for user profile images based on email
+# 'size' determines the image resolution (default is 200)
 def gravatar_url(email, size=200):
     email_hash = hashlib.md5(email.strip().lower().encode('utf-8')).hexdigest()
     return f"https://www.gravatar.com/avatar/{email_hash}?d=identicon&s={size}"
 
 
+# Display a specific blog post and allow users to comment
 @app.route("/post/<int:post_id>", methods=["GET", "POST"])
 def show_post(post_id):
     post = Post.query.get_or_404(post_id)
@@ -186,11 +246,13 @@ def show_post(post_id):
         return redirect(url_for('show_post', post_id=post.id))
     return render_template("post.html", post=post, form=form, current_user=current_user)
 
+# About page route
 @app.route("/about")
 def about():
     return render_template("about.html", current_user=current_user)
 
 
+# Contact page for sending emails (authenticated users only)
 @app.route("/contact", methods=["GET", "POST"])
 def contact():
     form = EmailForm()
@@ -209,10 +271,12 @@ def contact():
     return render_template("contact.html", form=form, current_user=current_user)
 
 
+# Route to create a new blog post
 @app.route("/new-post", methods=['GET', 'POST'])
 def add_new_post():
     form = CreatePostForm()
     if form.validate_on_submit():
+        # Create and save a new blog post
         new_post = Post(
             title=form.title.data,
             subtitle=form.subtitle.data,
@@ -225,6 +289,7 @@ def add_new_post():
         return redirect(url_for("get_all_posts"))
     return render_template("make-post.html", form=form, current_user=current_user)
 
+# Route to create a post with an image upload
 @app.route('/create-post', methods=['GET', 'POST'])
 @login_required
 def create_post():
@@ -242,6 +307,7 @@ def create_post():
         else:
             image_url = None
 
+        # Save the new post with the uploaded image
         new_post = Post(
             title=form.title.data,
             subtitle=form.subtitle.data,
@@ -260,6 +326,7 @@ def create_post():
         print(form.errors)  # Debug statement
     return render_template('make-post.html', form=form, current_user=current_user)
 
+# Route to edit an existing post
 @app.route("/edit-post/<int:post_id>", methods=['GET', 'POST'])
 @login_required
 def edit_post(post_id):
@@ -290,6 +357,7 @@ def edit_post(post_id):
     return render_template('make-post.html', form=form, current_user=current_user, post=post)
 
 
+# Route to delete a post
 @app.route("/delete-post/<int:post_id>", methods=['POST'])
 @login_required
 def delete_post(post_id):
@@ -300,6 +368,7 @@ def delete_post(post_id):
     db.session.commit()
     return redirect(url_for('get_all_posts'))
 
+# Route to delete a comment
 @app.route("/delete-comment/<int:comment_id>", methods=["GET", "POST"])
 @login_required
 def delete_comment(comment_id):
@@ -308,10 +377,12 @@ def delete_comment(comment_id):
     db.session.commit()
     return redirect(url_for('show_post', post_id=comment_to_delete.post_id))
 
+# Forgot password route
 @app.route('/forgot-password')
 def forgot_password():
     return render_template('forgot_password.html')
 
+# User profile management
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
@@ -347,11 +418,13 @@ def profile():
 
     return render_template('profile.html', form=form, current_user=current_user, time=time)
 
+# View other users' profiles
 @app.route('/user/<int:user_id>')
 def user_profile(user_id):
     user = User.query.get_or_404(user_id)
     return render_template('user_profile.html', user=user, current_user=current_user)
 
+# Run the app
 if __name__ == "__main__":
     with app.app_context():
         app.run(debug=True, extra_files=["templates/", "static/"])
