@@ -67,9 +67,11 @@ version = "1.0.1"
 dev = ["pytest", "pytest-timeout", "coverage", "tox", "sphinx", "pallets-sphinx-themes", "sphinx-issues"]
 watchdog = ["watchdog"]
 
+
 [metadata]
 content-hash = "063f8c74154580826be2e32820af9c11e8f1fb9bf35b7fddc1a48acd748fcb20"
 python-versions = "^3.8"
+
 
 [metadata.files]
 click = [
