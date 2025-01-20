@@ -61,13 +61,24 @@
     removePlugins: 'easyimage,cloudservices',
     on: {
       instanceReady: function () {
-        // Hide notification
+        // Hide notification manually via CSS
         const notification = document.querySelector('.cke_notification_message');
         if (notification) {
           notification.style.display = 'none';
         }
       }
     }
+  });
+
+  // Override the notification creation to prevent it from showing
+  CKEDITOR.on('instanceReady', function(evt) {
+    evt.editor._createNotification = function() {
+      return {
+        update: () => {},  // No-op function
+        show: () => {},    // No-op function
+        hide: () => {}     // No-op function
+      };
+    };
   });
 </script>
 

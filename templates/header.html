@@ -40,6 +40,13 @@
     }
   </style>
 
+  <!-- Preload image only if specified -->
+  {% if preload_image %}
+  <link rel="preload" href="{{ url_for('static', filename=preload_image) }}" as="image">
+  {% endif %}
+  
+  <link rel="preload" href="https://fonts.gstatic.com/s/opensans/v40/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-muw.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  
 </head>
 
 <body>

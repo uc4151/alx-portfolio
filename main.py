@@ -132,7 +132,7 @@ def get_all_posts():
     else:
         posts = Post.query.all()
     csrf_token = generate_csrf()
-    return render_template("index.html", all_posts=posts, current_user=current_user, csrf_token=csrf_token)
+    return render_template("index.html", all_posts=posts, current_user=current_user, csrf_token=csrf_token, preload_image="img/bg4.jpeg")
 
 
 # User registration route
@@ -193,7 +193,7 @@ def register():
         else:
             flash("Invalid input. Please correct the errors and try again.", "danger")
 
-    return render_template("register.html", form=form)
+    return render_template("register.html", form=form, preload_image="https://images.unsplash.com/photo-1531592937781-344ad608fabf?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=80")
 
 
 # User login route
@@ -213,7 +213,7 @@ def login():
             return redirect(url_for('get_all_posts'))
         else:
             flash('Login unsuccessful. Please check username/email and password', 'danger')
-    return render_template('login.html', form=form)
+    return render_template('login.html', form=form, preload_image="https://images.unsplash.com/photo-1484100356142-db6ab6244067?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=80")
 
 # User logout route
 @app.route('/logout')
@@ -249,7 +249,7 @@ def show_post(post_id):
 # About page route
 @app.route("/about")
 def about():
-    return render_template("about.html", current_user=current_user)
+    return render_template("about.html", current_user=current_user, preload_image="img/about-bg.jpg")
 
 
 # Contact page for sending emails (authenticated users only)
@@ -268,7 +268,7 @@ def contact():
     elif not current_user.is_authenticated:
         flash("You need to login to send email!")
         return redirect(url_for("login"))
-    return render_template("contact.html", form=form, current_user=current_user)
+    return render_template("contact.html", form=form, current_user=current_user, preload_image="img/contact-bg.jpg")
 
 
 # Route to create a new blog post
@@ -287,7 +287,7 @@ def add_new_post():
         db.session.add(new_post)
         db.session.commit()
         return redirect(url_for("get_all_posts"))
-    return render_template("make-post.html", form=form, current_user=current_user)
+    return render_template("make-post.html", form=form, current_user=current_user, preload_image="img/edit-bg.jpg")
 
 # Route to create a post with an image upload
 @app.route('/create-post', methods=['GET', 'POST'])
@@ -390,6 +390,14 @@ def profile():
     profile_picture = None  # Initialize the variable
 
     if form.validate_on_submit():
+        # Check for duplicate email
+        if current_user.email != form.email.data:  # Check only if the email is being changed
+            existing_user = User.query.filter_by(email=form.email.data).first()
+            if existing_user:
+                flash('This email is already in use by another account.', 'error')
+                return redirect(url_for('profile'))
+
+        # Update user details
         current_user.name = form.name.data
         current_user.email = form.email.data
         current_user.bio = form.bio.data
@@ -412,11 +420,13 @@ def profile():
         return redirect(url_for('get_all_posts'))
 
     elif request.method == 'GET':
+        # Pre-fill the form with existing user data
         form.name.data = current_user.name
         form.email.data = current_user.email
         form.bio.data = current_user.bio
 
     return render_template('profile.html', form=form, current_user=current_user, time=time)
+
 
 # View other users' profiles
 @app.route('/user/<int:user_id>')

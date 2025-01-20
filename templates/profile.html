@@ -6,25 +6,46 @@
 <div class="container">
   <div class="row">
     <div class="col-lg-8 col-md-10 mx-auto">
+
+      <!-- Flash Messages Section -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="alert-messages">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      
+      <!-- Profile Form -->
       <h2 class="text-center">Edit Profile</h2>
       <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
+
         <div class="form-group">
-            {{ form.name.label(class="form-label") }}
-            {{ form.name(class="form-control", autocomplete="name") }}
-          </div>
-          <div class="form-group">
-            {{ form.email.label(class="form-label") }}
-            {{ form.email(class="form-control", autocomplete="email") }}
-          </div>
-          <div class="form-group">
-            {{ form.bio.label(class="form-label") }}
-            {{ form.bio(class="form-control", autocomplete="off") }}
-          </div>
-          <div class="form-group">
-            {{ form.profile_picture.label(class="form-label") }}
-            {{ form.profile_picture(class="form-control-file", autocomplete="off") }}
-          </div>
+            {{ form.name.label(class="form-label", for=form.name.id) }}
+            {{ form.name(class="form-control", id=form.name.id, autocomplete="name") }}
+        </div>
+
+        <div class="form-group">
+            {{ form.email.label(class="form-label", for=form.email.id) }}
+            {{ form.email(class="form-control", id=form.email.id, autocomplete="email") }}
+        </div>
+
+        <div class="form-group">
+            {{ form.bio.label(class="form-label", for=form.bio.id) }}
+            {{ form.bio(class="form-control", id=form.bio.id, autocomplete="off") }}
+        </div>
+
+        <div class="form-group">
+            {{ form.profile_picture.label(class="form-label", for=form.profile_picture.id) }}
+            {{ form.profile_picture(class="form-control-file", id=form.profile_picture.id, autocomplete="off") }}
+        </div>
+
         <button type="submit" class="btn btn-primary">Update Profile</button>
       </form>
     </div>
