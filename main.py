@@ -24,6 +24,7 @@ import uuid
 
 # Load environment variables
 load_dotenv()
+
 email_sender = EmailSender()
 
 # Initialize Flask app
@@ -46,9 +47,13 @@ app.jinja_env.globals['wtf'] = FlaskForm
 def inject_time():
     return dict(time=time)
 
-# CONNECT TO DB
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/blogpost.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.root_path, 'instance', 'blogpost.db')
+# Use PostgreSQL if DATABASE_URL is set, otherwise raise an error
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+
+if not app.config['SQLALCHEMY_DATABASE_URI']:
+    raise ValueError("DATABASE_URL is not set. Please set it in your environment variables.")
+
+# Disable modification tracking for performance
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize SQLAlchemy and database migrations
@@ -433,6 +438,10 @@ def profile():
 def user_profile(user_id):
     user = User.query.get_or_404(user_id)
     return render_template('user_profile.html', user=user, current_user=current_user)
+
+@app.route('/healthz')
+def health_check():
+    return "OK", 200
 
 # Run the app
 if __name__ == "__main__":
