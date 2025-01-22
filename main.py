@@ -19,6 +19,7 @@ from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from flask_wtf.csrf import generate_csrf
 import time
+import psycopg2
 import os
 import uuid
 
