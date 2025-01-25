@@ -7,7 +7,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 from forms import CreatePostForm, RegisterForm, LoginForm, PostForm, CommentForm, EmailForm, ProfileForm
 from functools import wraps
@@ -60,6 +60,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize SQLAlchemy and database migrations
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+# Call the retry function to ensure DB is ready before proceeding
+connect_with_retry(db)
 
 # Define a simple test model
 class TestConnection(db.Model):
@@ -442,6 +445,25 @@ def user_profile(user_id):
 @app.route('/healthz')
 def health_check():
     return "OK", 200
+
+def connect_with_retry(db, retries=5, delay=2):
+    """
+    Attempts to connect to the database with retries.
+    
+    Args:
+        db: The SQLAlchemy database instance.
+        retries: Number of retry attempts.
+        delay: Delay between retries (in seconds).
+    """
+    for attempt in range(retries):
+        try:
+            db.session.execute('SELECT 1')  # Simple query to check DB readiness
+            print("Database connection successful.")
+            return
+        except OperationalError as e:
+            print(f"Database connection failed, retrying... ({attempt+1}/{retries})")
+            time.sleep(delay)  # Wait before retrying
+    raise Exception("Database connection failed after retries")
 
 # Run the app
 if __name__ == "__main__":
