@@ -14,6 +14,7 @@ from functools import wraps
 from flask import abort
 import hashlib
 from dotenv import load_dotenv
+from sqlalchemy import text
 from email_sender import EmailSender
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
@@ -61,7 +62,33 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-# Call the retry function to ensure DB is ready before proceeding
+import time
+from sqlalchemy.exc import OperationalError
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+
+# Retry function for database connection
+def connect_with_retry(db, retries=5, delay=2):
+    """
+    Attempts to connect to the database with retries.
+
+    Args:
+        db: The SQLAlchemy database instance.
+        retries: Number of retry attempts.
+        delay: Delay between retries (in seconds).
+    """
+    with app.app_context():  # Ensure we're inside the Flask app context
+        for attempt in range(retries):
+            try:
+                db.session.execute(text('SELECT 1'))  # Simple query to check DB readiness
+                print("Database connection successful.")
+                return
+            except OperationalError as e:
+                print(f"Database connection failed, retrying... ({attempt+1}/{retries})")
+                time.sleep(delay)  # Wait before retrying
+        raise Exception("Database connection failed after retries")
+
+# Call the function before proceeding
 connect_with_retry(db)
 
 # Define a simple test model
