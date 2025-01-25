@@ -190,11 +190,6 @@ def register():
                 flash("Registration successful! Welcome to Intelvibez!", "success")
                 return redirect(url_for("get_all_posts"))
 
-            except IntegrityError:
-                db.session.rollback()  # Undo any changes to prevent crashing
-                flash("An account with this email or username already exists. Please try again.", "danger")
-                return redirect(url_for('register'))
-
             except Exception as e:
                 db.session.rollback()
                 flash(f"An unexpected error occurred: {str(e)}", "danger")
